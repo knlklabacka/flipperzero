@@ -1,0 +1,156 @@
+I just got my FlipperZero two weeks ago and I was hopeful that is would be up and running in no time.
+I should not have made that assumption.  I wanted to start with creating my own application.  Almost 
+every online tutorial I came across did not work, with errors left and right.  I would start the 
+tutorial and come across fbt errors, ufbt errors, git errors, firmware and app version mismatch.
+I finally got one app to compile and load onto the FlipperZero.  I tried the process below several
+times and got consistant results.  I hope this will help another noob out there.
+
+
+Flipper Zero on Windows 10 or Windows 11
+
+Programs you will before you start:
+	python installed https://www.python.org/downloads/
+	pip installed https://www.geeksforgeeks.org/how-to-install-pip-on-windows/
+	Visual Studio Code installed https://code.visualstudio.com/download
+
+Plug your FlipperZero into your computer with a USB-C cable.
+
+Open a command prompt with administrator privileges.
+	Press Windows+R to open the "Run" box.
+	Type "cmd" into the box and then press Ctrl+Shift+Enter to run the command as an administrator.
+
+Create a directory on you local computer
+	ex. C:\FlipperZero
+	> cd c:\ <enter>
+	> mkdir FlipperZero <enter>
+	> cd FlipperZero <enter>
+	
+Clone the git repository for the offical flipperzero-firmware.
+	> git clone --recursive https://github.com/flipperdevices/flipperzero-firmware.git <enter>
+	Once this is complete you will have a new directory for the flipperzero-firmware
+	at the time fo this writing (03/06/2024). Latest firmware is 0.98.3
+
+Change Directory to downloaded firmware.	
+	> cd flipperzero-firmware <enter>
+	this is all of the firmware files for the flipperzero
+	
+Change directory to applications_user.
+	> cd applications_users <enter>
+	
+Create a directory under /applications_users/
+	> mkdir {APP_NAME} <enter>   /* {APP_NAME} is the name of the app you want to create
+		ex. mkdir test_app <enter>
+	
+Change directory to new application directory
+	> cd {APP_NAME} <enter>
+	ex. cd test_app <enter>
+	This is where you will create your app files.
+	At the bare minimum you will need a .c and .fam file.
+	
+Here is an example app I got from 
+	https://github.com/instantiator/flipper-zero-tutorial-app/tree/main
+	Thank you instantiator.dev!
+	You can download the zip file and copy the following into your applications_user/{APP_NAME}/ directory
+		1. /images/cvc_36x36.png
+		2. /images/one.png
+		3. /images/two.png
+		4. application.fam
+		5. test_app.c
+		6. test_app.png
+		
+	Rename the test_app.c to the name of your app, {APP_NAME}.c
+	Rename the test_app.png to the name of your app, {APP_NAME}.png
+	
+	I'm sure there are better ways to do this but for those who are like me and extremely new to FlipperZero, this is what I did to get it working.
+	
+We now have the files we need to continue.
+
+Launch Visual Studio Code.  I will refer to Visual Studio Code as VC.
+	Here is the download link if you need it again. https://code.visualstudio.com/download
+	
+Once VC is installed and launched, open the folder for flipperzero-firmware.
+	If you have been following along it's in C:\FlipperZero\flipperzero-firmware\
+	If you get a prompt to trust the authors click 'Yes'.
+	Close the 'Welcome' Tab.
+	
+You should now see the flipperzero-firmware directory listed in the 'Explorer' pane on the left.
+	Click '>' next to applications_user directory.
+	You should see the copied files from the example we downloaded before.
+	
+Go to the menu bar at the top of VC, click on 'Terminal', 'New Terminal'
+	or you can use Ctrl+Shift+` to open the terminal window
+	
+	In the terminal we should see PS C:\FlipperZero\flipperzero-firmware>
+	
+In the terminal type in the following
+	> cd .\applications_user\{APP_NAME}\
+	Remember to replace {APP_NAME] with the app name you chose
+	Your terminal should now show PS C:\FlipperZero\flipperzero-firmware\application_user\{APP_NAME}
+	
+Install ufbt (micro flipper build tool).  You need python installed to proceed.
+	In the terminal window type the following
+	> py -m pip install --upgrade ufbt
+	
+
+Before we build our app a couple things to double check are:
+	Make sure the file names in your applications_user/{APP_NAME}/ match your app name.
+	If you are using the example app from instantiator you have to change the source code in {APP_NAME}.c to match the name you gave your app
+		#define TAG "test-app" -> would have to match your app name
+		#include <test_app_icons.h> -> would have to match your app name.  This file is created during the build process.
+		
+	Make sure to change the .fam file to match your app as well.
+	It should look similar to below:
+		App(
+			appid="test_app",  # Must be unique
+			name="App test_app",  # Displayed in menus
+			apptype=FlipperAppType.EXTERNAL,
+			entry_point="test_app_app",
+			stack_size=2 * 1024,
+			fap_category="Examples",
+			# Optional values
+			# fap_version="0.1",
+			fap_icon="test_app.png",  # 10x10 1-bit PNG
+			# fap_description="A simple app",
+			# fap_author="J. Doe",
+			# fap_weburl="https://github.com/user/test_app",
+			fap_icon_assets="images",  # Image assets to compile for this application
+		)
+	
+		
+You should now run the following command in the terminal to configure VC
+	> ufbt vscode_dist	
+	
+Now you can run the command to build your application
+	> ufbt build
+	
+	If you followed along you should see output like this
+		PS C:\FlipperZero\flipperzero-firmware\applications_user\test_app> ufbt build
+	scons: Entering directory `C:\Users\knlkl\.ufbt\current\scripts\ufbt'
+			CC      C:\FlipperZero\flipperzero-firmware\applications_user\test_app\test_app.c
+			CC      C:\Users\knlkl\.ufbt\build\test_app\test_app_icons.c
+			LINK    C:\Users\knlkl\.ufbt\build\test_app_d.elf
+			APPMETA C:\Users\knlkl\.ufbt\build\test_app.fap
+			FAP     C:\Users\knlkl\.ufbt\build\test_app.fap
+			FASTFAP C:\Users\knlkl\.ufbt\build\test_app.fap
+			APPCHK  C:\Users\knlkl\.ufbt\build\test_app.fap
+					Target: 7, API: 58.0
+	PS C:\FlipperZero\flipperzero-firmware\applications_user\test_app> 
+
+
+At this point you have two options
+	1. Launch the app by typing in the terminal
+		> ufbt launch
+	2. Flash flipperzero 
+		> ufbt flash_usb
+		Flashing the flipperzero takes a couple minutes and show progress on the actual flipperzero
+		If there are no errors you will see on your flipperzero Firmware update Success OK >
+		
+		
+Take a look at your flipperzero.  If you used the ufbt launch command you should see the app running on your flipperzero.
+If you used the ufbt flash_usb command you may need to open the app on your flipperzero.
+	From your flipperzero navigate to Apps->Examples->{APP_NAME} to launch the your app.
+		
+Feel free to message me if you come across any issues. I can do my best to help
+Let me know if you would like me to add instructions on install Python, pip or Visual Studio Code
+
+	
